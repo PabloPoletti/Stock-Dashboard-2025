@@ -5,44 +5,47 @@ import matplotlib.pyplot as plt
 import ta
 import seaborn as sns
 import matplotlib.ticker as ticker
+import matplotlib.dates as mdates
 
 # Configure the page
 st.set_page_config(layout="wide")
 
 # Create a sidebar for navigation
 st.sidebar.title('Navigation')
-page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix'])
+page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix', 'Fixed Income'])
+
+# Sample data for countries and indices
+country_indices = {
+    'USA': ['S&P 500', 'NASDAQ 100'],
+    'Argentina': ['Merval'],
+    'Brazil': ['Bovespa'],
+    # Add more countries as needed
+}
+
+# Index constituents (sample stocks)
+index_stocks = {
+    'S&P 500': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],
+    'NASDAQ 100': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'],
+    'Merval': ['GGAL.BA', 'YPFD.BA', 'BMA.BA', 'TXAR.BA', 'TECO2.BA'],
+    'Bovespa': ['PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 'ABEV3.SA'],
+    # Add more indices and their stocks as needed
+}
+
+# Currency symbols mapping
+currency_symbols = {
+    'USD': '$',
+    'EUR': '€',
+    'ARS': '$',
+    'BRL': 'R$',
+    # Add other currencies as needed
+}
 
 if page == 'Stock Analysis':
     # Country and Index Selection
     st.sidebar.title('Country and Index Selection')
-
-    # Sample data for countries and indices
-    country_indices = {
-        'USA': ['S&P 500', 'NASDAQ 100'],
-        'Argentina': ['Merval'],
-        'UK': ['FTSE 100'],
-        'Germany': ['DAX'],
-        'Japan': ['Nikkei 225'],
-        # Add more countries and indices as needed
-    }
-
     country = st.sidebar.selectbox('Select Country', list(country_indices.keys()))
-
     indices = country_indices[country]
     index = st.sidebar.selectbox('Select Index', indices)
-
-    # Sample data for index constituents
-    index_stocks = {
-        'S&P 500': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],  # Sample stocks
-        'NASDAQ 100': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'FB'],  # Sample stocks
-        'Merval': ['GGAL.BA', 'YPFD.BA', 'BMA.BA', 'TXAR.BA', 'TECO2.BA'],  # Argentine stocks
-        'FTSE 100': ['AZN.L', 'HSBA.L', 'BP.L', 'GSK.L', 'RIO.L'],  # UK stocks
-        'DAX': ['SAP.DE', 'BMW.DE', 'DAI.DE', 'ALV.DE', 'BAS.DE'],  # German stocks
-        'Nikkei 225': ['7203.T', '6758.T', '9984.T', '9432.T', '8306.T'],  # Japanese stocks
-        # Add more indices and their stocks as needed
-    }
-
     stocks = index_stocks.get(index, [])
     if stocks:
         symbol = st.sidebar.selectbox('Select Stock', stocks)
@@ -51,6 +54,13 @@ if page == 'Stock Analysis':
         symbol = None
 
     if symbol:
+        # Get ticker info to retrieve company name and currency
+        ticker_data = yf.Ticker(symbol)
+        ticker_info = ticker_data.info
+        company_name = ticker_info.get('shortName', symbol)
+        currency_code = ticker_info.get('currency', 'USD')
+        currency_symbol = currency_symbols.get(currency_code, currency_code)
+
         # Inputs in the sidebar
         st.sidebar.title('Stock Analysis')
         period = st.sidebar.selectbox('Period', ['1mo', '3mo', '6mo', '1y', '5y', 'max'], index=3)
@@ -86,7 +96,6 @@ if page == 'Stock Analysis':
         if data.empty:
             st.write("No data found for the selected stock.")
         else:
-            # [Rest of the code remains the same as your current code]
             # Calculate indicators
             if show_ma:
                 for ma in show_ma:
@@ -140,7 +149,7 @@ if page == 'Stock Analysis':
                 data['ROC'] = ta.momentum.ROCIndicator(close=data['Close']).roc()
 
             # Plotting
-            st.title(f"Dashboard for {symbol.upper()}")
+            st.title(f"{company_name} ({symbol.upper()})")
 
             if chart_type == 'Candlestick':
                 # For candlestick chart, use mplfinance
@@ -178,6 +187,21 @@ if page == 'Stock Analysis':
                     figsize=(14, 7)
                 )
 
+                # Adjust axes
+                ax = axlist[0]  # Main price axis
+                ax.yaxis.set_ticks_position('both')
+                ax.tick_params(labelright=True)
+
+                # Set y-axis formatter to display currency and format without decimals
+                ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(currency_symbol + '{x:,.0f}'))
+
+                # Increase date labels
+                locator = mdates.AutoDateLocator()
+                formatter = mdates.ConciseDateFormatter(locator)
+                ax.xaxis.set_major_locator(locator)
+                ax.xaxis.set_major_formatter(formatter)
+                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
                 st.pyplot(fig)
             else:
                 # Line chart
@@ -200,8 +224,22 @@ if page == 'Stock Analysis':
                 if show_parabolic_sar:
                     ax.plot(data.index, data['Parabolic_SAR'], label='Parabolic SAR', linestyle='--', color='red')
 
+                # Adjust y-axis to show ticks on both sides
+                ax.yaxis.set_ticks_position('both')
+                ax.tick_params(labelright=True)
+
+                # Set y-axis formatter to display currency and format without decimals
+                ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(currency_symbol + '{x:,.0f}'))
+
+                # Increase date labels
+                locator = mdates.AutoDateLocator()
+                formatter = mdates.ConciseDateFormatter(locator)
+                ax.xaxis.set_major_locator(locator)
+                ax.xaxis.set_major_formatter(formatter)
+                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
                 ax.set_xlabel('Date')
-                ax.set_ylabel('Price')
+                ax.set_ylabel(f'Price ({currency_code})')
                 ax.legend()
                 st.pyplot(fig)
 
@@ -218,31 +256,34 @@ if page == 'Stock Analysis':
                     ax_vol.plot(data.index, data['Volume'], color='blue')
 
                 # Format y-axis to show units (e.g., in millions)
-                formatter = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
-                ax_vol.yaxis.set_major_formatter(formatter)
+                formatter_vol = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
+                ax_vol.yaxis.set_major_formatter(formatter_vol)
                 ax_vol.set_ylabel('Volume (Millions)')
                 ax_vol.set_xlabel('Date')
+
+                # Increase date labels
+                ax_vol.xaxis.set_major_locator(locator)
+                ax_vol.xaxis.set_major_formatter(formatter)
+                plt.setp(ax_vol.get_xticklabels(), rotation=45, ha='right')
+
                 st.pyplot(fig_vol)
 
             # Additional indicators plotting
-            # [Include plotting code for other indicators as before]
+            # (Include plotting code for other indicators as needed)
 
     else:
         st.write("Please select a stock to proceed.")
 
 elif page == 'Correlation Matrix':
-    # [Correlation Matrix code remains the same as your current code]
+    # Correlation Matrix Page
     st.title('Stock Correlation Matrix')
     st.sidebar.title('Correlation Matrix Settings')
 
     # Select country and index
     st.sidebar.title('Country and Index Selection')
-
     country = st.sidebar.selectbox('Select Country', list(country_indices.keys()))
-
     indices = country_indices[country]
     index = st.sidebar.selectbox('Select Index', indices)
-
     stocks = index_stocks.get(index, [])
 
     # Select stocks for correlation matrix
@@ -294,3 +335,60 @@ elif page == 'Correlation Matrix':
         """)
     else:
         st.write("Please select at least two stocks to proceed.")
+
+elif page == 'Fixed Income':
+    # Fixed Income Page
+    st.title('Sovereign Bonds Analysis')
+
+    st.sidebar.title('Fixed Income Settings')
+
+    # Sample data for countries and their bonds
+    country_bonds = {
+        'USA': ['US10Y', 'US30Y'],
+        'Argentina': ['AR10Y', 'AR30Y'],
+        'Brazil': ['BR10Y', 'BR30Y'],
+        # Add more countries and bonds as needed
+    }
+
+    country = st.sidebar.selectbox('Select Country', list(country_bonds.keys()))
+    bonds = country_bonds[country]
+
+    bond = st.sidebar.selectbox('Select Bond', bonds)
+
+    # Fetch bond data
+    # Note: Accessing bond data may require specific data sources or APIs.
+    # For demonstration, we'll use sample data or placeholders.
+
+    # Simulate bond data
+    bond_info = {
+        'US10Y': {'Name': 'US 10-Year Treasury', 'Maturity': '10 years', 'Coupon': '1.5%', 'Yield': '1.3%'},
+        'US30Y': {'Name': 'US 30-Year Treasury', 'Maturity': '30 years', 'Coupon': '2.0%', 'Yield': '2.1%'},
+        'AR10Y': {'Name': 'Argentina 10-Year Bond', 'Maturity': '10 years', 'Coupon': '7.5%', 'Yield': '8.0%'},
+        'AR30Y': {'Name': 'Argentina 30-Year Bond', 'Maturity': '30 years', 'Coupon': '8.5%', 'Yield': '9.0%'},
+        'BR10Y': {'Name': 'Brazil 10-Year Bond', 'Maturity': '10 years', 'Coupon': '5.0%', 'Yield': '5.5%'},
+        'BR30Y': {'Name': 'Brazil 30-Year Bond', 'Maturity': '30 years', 'Coupon': '6.0%', 'Yield': '6.5%'},
+    }
+
+    bond_data = bond_info.get(bond, {})
+
+    if bond_data:
+        st.subheader(f"{bond_data['Name']} ({bond})")
+        st.write(f"**Maturity:** {bond_data['Maturity']}")
+        st.write(f"**Coupon Rate:** {bond_data['Coupon']}")
+        st.write(f"**Current Yield:** {bond_data['Yield']}")
+
+        # Simulate price data
+        dates = pd.date_range(end=pd.Timestamp.today(), periods=100)
+        prices = pd.Series(100 + pd.np.random.randn(100).cumsum(), index=dates)
+
+        fig_bond, ax_bond = plt.subplots(figsize=(14, 7))
+        ax_bond.plot(prices.index, prices.values, label='Price')
+        ax_bond.set_xlabel('Date')
+        ax_bond.set_ylabel('Price')
+        ax_bond.legend()
+        st.pyplot(fig_bond)
+
+        # Include relevant indicators or analytics for bonds if desired
+
+    else:
+        st.write("No data available for the selected bond.")
