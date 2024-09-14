@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import ta
 import seaborn as sns
+import matplotlib.ticker as ticker
 
 # Configure the page
 st.set_page_config(layout="wide")
@@ -178,11 +179,96 @@ if page == 'Stock Analysis':
             else:
                 ax_vol.plot(data.index, data['Volume'], color='blue')
 
+            # Format y-axis to show units (e.g., in millions)
+            formatter = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
+            ax_vol.yaxis.set_major_formatter(formatter)
+            ax_vol.set_ylabel('Volume (Millions)')
             ax_vol.set_xlabel('Date')
-            ax_vol.set_ylabel('Volume')
             st.pyplot(fig_vol)
 
         # Additional indicators (Same as before)
+        if show_rsi:
+            st.subheader('RSI')
+            fig_rsi, ax_rsi = plt.subplots(figsize=(14, 3))
+            ax_rsi.plot(data.index, data['RSI'], color='purple')
+            ax_rsi.axhline(70, color='red', linestyle='--')
+            ax_rsi.axhline(30, color='green', linestyle='--')
+            ax_rsi.set_xlabel('Date')
+            ax_rsi.set_ylabel('RSI')
+            st.pyplot(fig_rsi)
+
+        if show_macd:
+            st.subheader('MACD')
+            fig_macd, ax_macd = plt.subplots(figsize=(14, 3))
+            ax_macd.plot(data.index, data['MACD'], label='MACD', color='blue')
+            ax_macd.plot(data.index, data['MACD_signal'], label='Signal Line', color='red')
+            ax_macd.set_xlabel('Date')
+            ax_macd.set_ylabel('MACD')
+            ax_macd.legend()
+            st.pyplot(fig_macd)
+
+        # Include other indicators as before
 
 elif page == 'Correlation Matrix':
-    # Correlation Matrix Page (Same as before)
+    # Correlation Matrix Page
+    st.title('Stock Correlation Matrix')
+    st.sidebar.title('Correlation Matrix Settings')
+
+    # Select stocks
+    num_stocks = st.sidebar.slider('Number of Stocks', min_value=2, max_value=10, value=2)
+    stock_symbols = []
+    for i in range(num_stocks):
+        symbol = st.sidebar.text_input(f'Symbol {i+1}', value='AAPL' if i == 0 else '')
+        if symbol:
+            stock_symbols.append(symbol.upper())
+
+    # Select time period
+    period = st.sidebar.selectbox('Period', ['1mo', '3mo', '6mo', '1y', '5y', 'max'], index=3)
+    interval = st.sidebar.selectbox('Interval', ['1d', '1wk', '1mo'], index=0)
+    # Select correlation method
+    corr_method = st.sidebar.selectbox('Correlation Method', ['Pearson', 'Spearman', 'Kendall'], index=0)
+
+    if len(stock_symbols) >= 2:
+        @st.cache
+        def load_data(symbols, period, interval):
+            df = pd.DataFrame()
+            for sym in symbols:
+                data = yf.download(sym, period=period, interval=interval)
+                data = data['Close'].rename(sym)
+                df = pd.concat([df, data], axis=1)
+            return df
+
+        data = load_data(stock_symbols, period, interval)
+
+        if data.isnull().values.any():
+            data = data.fillna(method='ffill').dropna()
+
+        # Calculate correlation
+        if corr_method == 'Pearson':
+            corr = data.corr(method='pearson')
+        elif corr_method == 'Spearman':
+            corr = data.corr(method='spearman')
+        elif corr_method == 'Kendall':
+            corr = data.corr(method='kendall')
+
+        # Plot correlation matrix
+        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax_corr, vmin=-1, vmax=1)
+        ax_corr.set_title(f'{corr_method} Correlation Matrix')
+        st.pyplot(fig_corr)
+
+        # Explanation legend
+        st.markdown("""
+        **Correlation Coefficient Interpretation:**
+        - **1**: Perfect positive correlation
+        - **0.7 to 0.99**: Strong positive correlation
+        - **0.4 to 0.69**: Moderate positive correlation
+        - **0.1 to 0.39**: Weak positive correlation
+        - **0**: No correlation
+        - **-0.1 to -0.39**: Weak negative correlation
+        - **-0.4 to -0.69**: Moderate negative correlation
+        - **-0.7 to -0.99**: Strong negative correlation
+        - **-1**: Perfect negative correlation
+        """)
+    else:
+        st.write("Please enter at least two stock symbols.")
