@@ -5,4 +5,5 @@ yfinance
 pandas
 matplotlib
 ta
-
+seaborn
+mplfinance
