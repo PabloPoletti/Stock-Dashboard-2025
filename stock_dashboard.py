@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import ta
 import seaborn as sns
 import matplotlib.ticker as ticker
-import matplotlib.dates as mdates
 
 # Configure the page
 st.set_page_config(layout="wide")
@@ -15,14 +14,6 @@ st.sidebar.title('Navigation')
 page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix'])
 
 if page == 'Stock Analysis':
-    # [All the code for the 'Stock Analysis' page remains the same]
-    # (This includes the code we updated earlier with the axis adjustments and date labels)
-    # ...
-
-    # [Include the entire 'Stock Analysis' code from the previous update]
-
-    # For brevity, I'm including the full code below.
-
     # Inputs in the sidebar
     st.sidebar.title('Stock Analysis')
     symbol = st.sidebar.text_input('Symbol', value='AAPL')
@@ -150,18 +141,6 @@ if page == 'Stock Analysis':
                 figsize=(14, 7)
             )
 
-            # Adjust axes
-            ax = axlist[0]  # Main price axis
-            ax.yaxis.set_ticks_position('both')
-            ax.tick_params(labelright=True)
-
-            # Increase date labels
-            locator = mdates.AutoDateLocator()
-            formatter = mdates.ConciseDateFormatter(locator)
-            ax.xaxis.set_major_locator(locator)
-            ax.xaxis.set_major_formatter(formatter)
-            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-
             st.pyplot(fig)
         else:
             # Line chart
@@ -184,17 +163,6 @@ if page == 'Stock Analysis':
             if show_parabolic_sar:
                 ax.plot(data.index, data['Parabolic_SAR'], label='Parabolic SAR', linestyle='--', color='red')
 
-            # Adjust y-axis to show ticks on both sides
-            ax.yaxis.set_ticks_position('both')
-            ax.tick_params(labelright=True)
-
-            # Increase date labels
-            locator = mdates.AutoDateLocator()
-            formatter = mdates.ConciseDateFormatter(locator)
-            ax.xaxis.set_major_locator(locator)
-            ax.xaxis.set_major_formatter(formatter)
-            plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-
             ax.set_xlabel('Date')
             ax.set_ylabel('Price')
             ax.legend()
@@ -213,21 +181,13 @@ if page == 'Stock Analysis':
                 ax_vol.plot(data.index, data['Volume'], color='blue')
 
             # Format y-axis to show units (e.g., in millions)
-            formatter_vol = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
-            ax_vol.yaxis.set_major_formatter(formatter_vol)
+            formatter = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
+            ax_vol.yaxis.set_major_formatter(formatter)
             ax_vol.set_ylabel('Volume (Millions)')
             ax_vol.set_xlabel('Date')
-
-            # Increase date labels
-            ax_vol.xaxis.set_major_locator(locator)
-            ax_vol.xaxis.set_major_formatter(formatter)
-            plt.setp(ax_vol.get_xticklabels(), rotation=45, ha='right')
-
             st.pyplot(fig_vol)
 
         # Additional indicators plotting
-        # (Include the plotting code for other indicators if desired)
-        # For example:
         if show_rsi:
             st.subheader('RSI')
             fig_rsi, ax_rsi = plt.subplots(figsize=(14, 3))
@@ -236,16 +196,79 @@ if page == 'Stock Analysis':
             ax_rsi.axhline(30, color='green', linestyle='--')
             ax_rsi.set_xlabel('Date')
             ax_rsi.set_ylabel('RSI')
-
-            # Adjust x-axis labels
-            ax_rsi.xaxis.set_major_locator(locator)
-            ax_rsi.xaxis.set_major_formatter(formatter)
-            plt.setp(ax_rsi.get_xticklabels(), rotation=45, ha='right')
-
             st.pyplot(fig_rsi)
 
-        # Continue with other indicators as needed
-        # ...
+        if show_macd:
+            st.subheader('MACD')
+            fig_macd, ax_macd = plt.subplots(figsize=(14, 3))
+            ax_macd.plot(data.index, data['MACD'], label='MACD', color='blue')
+            ax_macd.plot(data.index, data['MACD_signal'], label='Signal Line', color='red')
+            ax_macd.set_xlabel('Date')
+            ax_macd.set_ylabel('MACD')
+            ax_macd.legend()
+            st.pyplot(fig_macd)
+
+        if show_adx:
+            st.subheader('ADX')
+            fig_adx, ax_adx = plt.subplots(figsize=(14, 3))
+            ax_adx.plot(data.index, data['ADX'], color='orange')
+            ax_adx.set_xlabel('Date')
+            ax_adx.set_ylabel('ADX')
+            st.pyplot(fig_adx)
+
+        if show_obv:
+            st.subheader('On-Balance Volume (OBV)')
+            fig_obv, ax_obv = plt.subplots(figsize=(14, 3))
+            ax_obv.plot(data.index, data['OBV'], color='brown')
+            ax_obv.set_xlabel('Date')
+            ax_obv.set_ylabel('OBV')
+            st.pyplot(fig_obv)
+
+        if show_stochastic:
+            st.subheader('Stochastic Oscillator')
+            fig_stoch, ax_stoch = plt.subplots(figsize=(14, 3))
+            ax_stoch.plot(data.index, data['Stoch_%K'], label='%K', color='blue')
+            ax_stoch.plot(data.index, data['Stoch_%D'], label='%D', color='red')
+            ax_stoch.axhline(80, color='red', linestyle='--')
+            ax_stoch.axhline(20, color='green', linestyle='--')
+            ax_stoch.set_xlabel('Date')
+            ax_stoch.set_ylabel('Stochastic Oscillator')
+            ax_stoch.legend()
+            st.pyplot(fig_stoch)
+
+        if show_cci:
+            st.subheader('Commodity Channel Index (CCI)')
+            fig_cci, ax_cci = plt.subplots(figsize=(14, 3))
+            ax_cci.plot(data.index, data['CCI'], color='magenta')
+            ax_cci.set_xlabel('Date')
+            ax_cci.set_ylabel('CCI')
+            st.pyplot(fig_cci)
+
+        if show_williams:
+            st.subheader('Williams %R')
+            fig_williams, ax_williams = plt.subplots(figsize=(14, 3))
+            ax_williams.plot(data.index, data['Williams %R'], color='darkgreen')
+            ax_williams.axhline(-20, color='red', linestyle='--')
+            ax_williams.axhline(-80, color='green', linestyle='--')
+            ax_williams.set_xlabel('Date')
+            ax_williams.set_ylabel('Williams %R')
+            st.pyplot(fig_williams)
+
+        if show_momentum:
+            st.subheader('Momentum')
+            fig_momentum, ax_momentum = plt.subplots(figsize=(14, 3))
+            ax_momentum.plot(data.index, data['Momentum'], color='navy')
+            ax_momentum.set_xlabel('Date')
+            ax_momentum.set_ylabel('Momentum')
+            st.pyplot(fig_momentum)
+
+        if show_roc:
+            st.subheader('Rate of Change (ROC)')
+            fig_roc, ax_roc = plt.subplots(figsize=(14, 3))
+            ax_roc.plot(data.index, data['ROC'], color='teal')
+            ax_roc.set_xlabel('Date')
+            ax_roc.set_ylabel('ROC')
+            st.pyplot(fig_roc)
 
 elif page == 'Correlation Matrix':
     # Correlation Matrix Page
