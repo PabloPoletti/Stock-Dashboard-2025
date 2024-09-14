@@ -7,4 +7,4 @@ matplotlib
 ta
 seaborn
 mplfinance
-scipy==1.11.1
+scipy
