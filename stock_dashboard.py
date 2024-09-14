@@ -13,7 +13,8 @@ st.set_page_config(layout="wide")
 
 # Create a sidebar for navigation
 st.sidebar.title('Navigation')
-page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix', 'Fixed Income'])
+page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix', 'Fixed Income', 'Corporate Bonds'])
+
 
 # Sample data for countries and indices
 country_indices = {
@@ -432,15 +433,14 @@ elif page == 'Correlation Matrix':
         st.write("Please select at least two stocks to proceed.")
 
 elif page == 'Fixed Income':
-    # Fixed Income Page
     st.title('Sovereign Bonds Analysis')
 
     st.sidebar.title('Fixed Income Settings')
 
-    # Sample data for countries and their bonds
+    # Updated country_bonds with more Argentine bonds
     country_bonds = {
         'USA': ['US10Y', 'US30Y'],
-        'Argentina': ['AR10Y', 'AR30Y'],
+        'Argentina': ['AL29', 'AL30', 'AL35', 'AE38', 'AL41'],
         'Brazil': ['BR10Y', 'BR30Y'],
         # Add more countries and bonds as needed
     }
@@ -450,27 +450,192 @@ elif page == 'Fixed Income':
 
     bond = st.sidebar.selectbox('Select Bond', bonds)
 
-    # Fetch bond data
-    # Note: Accessing bond data may require specific data sources or APIs.
-    # For demonstration, we'll use sample data or placeholders.
-
-    # Simulate bond data
+    # Updated bond_info with additional bonds and information
     bond_info = {
-        'US10Y': {'Name': 'US 10-Year Treasury', 'Maturity': '10 years', 'Coupon': '1.5%', 'Yield': '1.3%'},
-        'US30Y': {'Name': 'US 30-Year Treasury', 'Maturity': '30 years', 'Coupon': '2.0%', 'Yield': '2.1%'},
-        'AR10Y': {'Name': 'Argentina 10-Year Bond', 'Maturity': '10 years', 'Coupon': '7.5%', 'Yield': '8.0%'},
-        'AR30Y': {'Name': 'Argentina 30-Year Bond', 'Maturity': '30 years', 'Coupon': '8.5%', 'Yield': '9.0%'},
-        'BR10Y': {'Name': 'Brazil 10-Year Bond', 'Maturity': '10 years', 'Coupon': '5.0%', 'Yield': '5.5%'},
-        'BR30Y': {'Name': 'Brazil 30-Year Bond', 'Maturity': '30 years', 'Coupon': '6.0%', 'Yield': '6.5%'},
+        # USA Bonds
+        'US10Y': {'Name': 'US 10-Year Treasury', 'Maturity': '2029-07-09', 'Coupon': '1.5%', 'Yield': '1.3%', 'ISIN': 'US10Y',
+                  'CurrentYield': '1.4%', 'Duration': '8.5', 'Convexity': '70.2', 'CreditRating': 'AAA'},
+        'US30Y': {'Name': 'US 30-Year Treasury', 'Maturity': '2051-07-09', 'Coupon': '2.0%', 'Yield': '2.1%', 'ISIN': 'US30Y',
+                  'CurrentYield': '2.05%', 'Duration': '25.0', 'Convexity': '200.5', 'CreditRating': 'AAA'},
+
+        # Argentine Bonds
+        'AL29': {'Name': 'Bonar 2029', 'Maturity': '2029-07-09', 'Coupon': '4.625%', 'Yield': '7.5%', 'ISIN': 'ARARGE03E113',
+                 'CurrentYield': '6.0%', 'Duration': '7.5', 'Convexity': '60.2', 'CreditRating': 'CCC+'},
+        'AL30': {'Name': 'Bonar 2030', 'Maturity': '2030-07-09', 'Coupon': '0.125%', 'Yield': '8.0%', 'ISIN': 'ARARGE03E121',
+                 'CurrentYield': '7.0%', 'Duration': '8.0', 'Convexity': '65.0', 'CreditRating': 'CCC+'},
+        'AL35': {'Name': 'Bonar 2035', 'Maturity': '2035-07-09', 'Coupon': '1.25%', 'Yield': '8.5%', 'ISIN': 'ARARGE03E139',
+                 'CurrentYield': '7.5%', 'Duration': '12.0', 'Convexity': '90.0', 'CreditRating': 'CCC+'},
+        'AE38': {'Name': 'Bonar 2038', 'Maturity': '2038-07-09', 'Coupon': '3.5%', 'Yield': '9.0%', 'ISIN': 'ARARGE03G688',
+                 'CurrentYield': '8.0%', 'Duration': '15.0', 'Convexity': '110.0', 'CreditRating': 'CCC+'},
+        'AL41': {'Name': 'Bonar 2041', 'Maturity': '2041-07-09', 'Coupon': '5.0%', 'Yield': '9.5%', 'ISIN': 'ARARGE03E147',
+                 'CurrentYield': '8.5%', 'Duration': '18.0', 'Convexity': '130.0', 'CreditRating': 'CCC+'},
+
+        # Brazilian Bonds
+        'BR10Y': {'Name': 'Brazil 10-Year Bond', 'Maturity': '2031-01-01', 'Coupon': '5.0%', 'Yield': '5.5%', 'ISIN': 'BR10Y',
+                  'CurrentYield': '5.25%', 'Duration': '9.0', 'Convexity': '75.0', 'CreditRating': 'BB'},
+        'BR30Y': {'Name': 'Brazil 30-Year Bond', 'Maturity': '2051-01-01', 'Coupon': '6.0%', 'Yield': '6.5%', 'ISIN': 'BR30Y',
+                  'CurrentYield': '6.25%', 'Duration': '22.0', 'Convexity': '190.0', 'CreditRating': 'BB'},
+        # Add more bonds as needed
     }
 
     bond_data = bond_info.get(bond, {})
 
     if bond_data:
         st.subheader(f"{bond_data['Name']} ({bond})")
-        st.write(f"**Maturity:** {bond_data['Maturity']}")
+        st.write(f"**Maturity Date:** {bond_data['Maturity']}")
         st.write(f"**Coupon Rate:** {bond_data['Coupon']}")
-        st.write(f"**Current Yield:** {bond_data['Yield']}")
+
+        st.sidebar.title('Bond Analysis Indicators')
+        show_ytm = st.sidebar.checkbox('Yield to Maturity (YTM)', value=True)
+        show_current_yield = st.sidebar.checkbox('Current Yield')
+        show_duration = st.sidebar.checkbox('Duration')
+        show_convexity = st.sidebar.checkbox('Convexity')
+        show_credit_rating = st.sidebar.checkbox('Credit Rating')
+
+        if show_ytm:
+            st.write(f"**Yield to Maturity (YTM):** {bond_data.get('Yield', 'N/A')}")
+        if show_current_yield:
+            st.write(f"**Current Yield:** {bond_data.get('CurrentYield', 'N/A')}")
+        if show_duration:
+            st.write(f"**Duration:** {bond_data.get('Duration', 'N/A')}")
+        if show_convexity:
+            st.write(f"**Convexity:** {bond_data.get('Convexity', 'N/A')}")
+        if show_credit_rating:
+            st.write(f"**Credit Rating:** {bond_data.get('CreditRating', 'N/A')}")
+
+        # Simulate price data
+        dates = pd.date_range(end=pd.Timestamp.today(), periods=100)
+        prices = pd.Series(100 + np.random.randn(100).cumsum(), index=dates)
+
+        fig_bond, ax_bond = plt.subplots(figsize=(14, 7))
+        ax_bond.plot(prices.index, prices.values, label='Price')
+        ax_bond.set_xlabel('Date')
+        ax_bond.set_ylabel('Price')
+        ax_bond.legend()
+        st.pyplot(fig_bond)
+
+    else:
+        st.write("No data available for the selected bond.")
+
+elif page == 'Corporate Bonds':
+    st.title('Corporate Bonds Analysis')
+
+    st.sidebar.title('Corporate Bonds Settings')
+
+    # Sample data for countries and their corporate bonds
+    country_corp_bonds = {
+        'USA': ['AAPL2025', 'MSFT2030'],
+        'Argentina': ['YPF2025', 'TECO2030'],
+        'Brazil': ['PETRO2025', 'VALE2030'],
+        # Add more countries and bonds as needed
+    }
+
+    country = st.sidebar.selectbox('Select Country', list(country_corp_bonds.keys()))
+    corp_bonds = country_corp_bonds[country]
+
+    corp_bond = st.sidebar.selectbox('Select Corporate Bond', corp_bonds)
+
+    # Fetch corporate bond data
+    # For demonstration, we'll use sample data
+
+    # Simulate corporate bond data
+    corp_bond_info = {
+        # USA Corporate Bonds
+        'AAPL2025': {
+            'Name': 'Apple Inc. 2025 Notes',
+            'Maturity': '2025-05-06',
+            'Coupon': '2.0%',
+            'Yield': '1.8%',
+            'ISIN': 'US037833AL45',
+            'CurrentYield': '1.9%',
+            'Duration': '4.5',
+            'Convexity': '20.3',
+            'CreditRating': 'AA+'
+        },
+        'MSFT2030': {
+            'Name': 'Microsoft Corp. 2030 Notes',
+            'Maturity': '2030-11-15',
+            'Coupon': '3.0%',
+            'Yield': '2.5%',
+            'ISIN': 'US594918BQ79',
+            'CurrentYield': '2.8%',
+            'Duration': '8.0',
+            'Convexity': '50.1',
+            'CreditRating': 'AAA'
+        },
+        # Argentine Corporate Bonds
+        'YPF2025': {
+            'Name': 'YPF S.A. 2025 Notes',
+            'Maturity': '2025-12-15',
+            'Coupon': '8.5%',
+            'Yield': '9.0%',
+            'ISIN': 'XS0501197263',
+            'CurrentYield': '8.8%',
+            'Duration': '3.8',
+            'Convexity': '15.2',
+            'CreditRating': 'CCC-'
+        },
+        'TECO2030': {
+            'Name': 'Telecom Argentina S.A. 2030 Notes',
+            'Maturity': '2030-03-15',
+            'Coupon': '9.0%',
+            'Yield': '9.5%',
+            'ISIN': 'US879273AA72',
+            'CurrentYield': '9.2%',
+            'Duration': '7.0',
+            'Convexity': '40.5',
+            'CreditRating': 'CCC'
+        },
+        # Brazilian Corporate Bonds
+        'PETRO2025': {
+            'Name': 'Petrobras Global Finance B.V. 2025 Notes',
+            'Maturity': '2025-01-27',
+            'Coupon': '6.25%',
+            'Yield': '6.0%',
+            'ISIN': 'US71647NAN03',
+            'CurrentYield': '6.1%',
+            'Duration': '4.0',
+            'Convexity': '18.0',
+            'CreditRating': 'BB-'
+        },
+        'VALE2030': {
+            'Name': 'Vale Overseas Limited 2030 Notes',
+            'Maturity': '2030-08-11',
+            'Coupon': '5.625%',
+            'Yield': '5.8%',
+            'ISIN': 'US91911TAK39',
+            'CurrentYield': '5.7%',
+            'Duration': '7.5',
+            'Convexity': '35.0',
+            'CreditRating': 'BBB-'
+        },
+    }
+
+    bond_data = corp_bond_info.get(corp_bond, {})
+
+    if bond_data:
+        st.subheader(f"{bond_data['Name']} ({corp_bond})")
+        st.write(f"**Maturity Date:** {bond_data['Maturity']}")
+        st.write(f"**Coupon Rate:** {bond_data['Coupon']}")
+
+        # Reuse the indicator selections from the Fixed Income page
+        st.sidebar.title('Bond Analysis Indicators')
+        show_ytm = st.sidebar.checkbox('Yield to Maturity (YTM)', value=True)
+        show_current_yield = st.sidebar.checkbox('Current Yield')
+        show_duration = st.sidebar.checkbox('Duration')
+        show_convexity = st.sidebar.checkbox('Convexity')
+        show_credit_rating = st.sidebar.checkbox('Credit Rating')
+
+        if show_ytm:
+            st.write(f"**Yield to Maturity (YTM):** {bond_data.get('Yield', 'N/A')}")
+        if show_current_yield:
+            st.write(f"**Current Yield:** {bond_data.get('CurrentYield', 'N/A')}")
+        if show_duration:
+            st.write(f"**Duration:** {bond_data.get('Duration', 'N/A')}")
+        if show_convexity:
+            st.write(f"**Convexity:** {bond_data.get('Convexity', 'N/A')}")
+        if show_credit_rating:
+            st.write(f"**Credit Rating:** {bond_data.get('CreditRating', 'N/A')}")
 
         # Simulate price data
         dates = pd.date_range(end=pd.Timestamp.today(), periods=100)
@@ -486,4 +651,5 @@ elif page == 'Fixed Income':
         # Include relevant indicators or analytics for bonds if desired
 
     else:
-        st.write("No data available for the selected bond.")
+        st.write("No data available for the selected corporate bond.")
+
