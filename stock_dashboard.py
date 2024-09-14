@@ -36,7 +36,7 @@ index_stocks = {
     'S&P 500': get_sp500_tickers(),
         #('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
         #('AMZN', 'Amazon.com Inc.'), ('TSLA', 'Tesla Inc.'), # Add more companies here
-    ,
+    
     'NASDAQ 100': [
         ('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
         ('AMZN', 'Amazon.com Inc.'), ('META', 'Meta Platforms Inc.'), # Add more companies here
