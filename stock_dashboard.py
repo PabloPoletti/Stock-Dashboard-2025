@@ -8,13 +8,6 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 
-# Get the list of S&P 500 companies using yfinance
-def get_sp500_tickers():
-    sp500_tickers = yf.Ticker('^GSPC').components
-    return [(ticker, info['longName']) for ticker, info in sp500_tickers.items()]
-
-sp500_list = get_sp500_tickers()
-
 # Configure the page
 st.set_page_config(layout="wide")
 
@@ -33,24 +26,11 @@ country_indices = {
 
 # Index constituents (sample stocks)
 index_stocks = {
-    'S&P 500': get_sp500_tickers(),
-        #('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
-        #('AMZN', 'Amazon.com Inc.'), ('TSLA', 'Tesla Inc.'), # Add more companies here
-    
-    'NASDAQ 100': [
-        ('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
-        ('AMZN', 'Amazon.com Inc.'), ('META', 'Meta Platforms Inc.'), # Add more companies here
-    ],
-    'Merval': [
-        ('GGAL.BA', 'Grupo Financiero Galicia S.A.'), ('YPFD.BA', 'YPF S.A.'), 
-        ('BMA.BA', 'Banco Macro S.A.'), ('TXAR.BA', 'Ternium Argentina S.A.'), 
-        ('TECO2.BA', 'Telecom Argentina S.A.'), # Add more companies here
-    ],
-    'Bovespa': [
-        ('PETR4.SA', 'Petrobras'), ('VALE3.SA', 'Vale S.A.'), ('ITUB4.SA', 'Itaú Unibanco'), 
-        ('BBDC4.SA', 'Banco Bradesco S.A.'), ('ABEV3.SA', 'Ambev S.A.'), # Add more companies here
-    ],
-    # Add more indices and their companies as needed
+    'S&P 500': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],
+    'NASDAQ 100': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'],
+    'Merval': ['GGAL.BA', 'YPFD.BA', 'BMA.BA', 'TXAR.BA', 'TECO2.BA'],
+    'Bovespa': ['PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 'ABEV3.SA'],
+    # Add more indices and their stocks as needed
 }
 
 # Currency symbols mapping
@@ -70,10 +50,7 @@ if page == 'Stock Analysis':
     index = st.sidebar.selectbox('Select Index', indices)
     stocks = index_stocks.get(index, [])
     if stocks:
-        # Create a dictionary for easy lookup of the stock symbol by company name
-        stock_dict = {f"{name} ({symbol})": symbol for symbol, name in stocks}
-        selected_stock = st.sidebar.selectbox('Select Stock', list(stock_dict.keys()))
-        symbol = stock_dict[selected_stock]
+        symbol = st.sidebar.selectbox('Select Stock', stocks)
     else:
         st.sidebar.write('No stocks available for the selected index.')
         symbol = None
