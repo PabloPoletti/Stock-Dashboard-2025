@@ -189,20 +189,19 @@ if page == 'Stock Analysis':
                     figsize=(14, 7)
                 )
 
-                # Adjust axes for candlestick chart
+                # Adjust axes
                 ax = axlist[0]  # Main price axis
                 ax.yaxis.set_ticks_position('both')
                 ax.tick_params(labelright=True)
-                
+
                 # Set y-axis formatter to display currency and format without decimals
                 ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(currency_symbol + '{x:,.0f}'))
-                
-                # Add legend for the candlestick chart
-                ax.legend(['Close Price', 'MA', 'EMA', 'Bollinger Bands', 'Parabolic SAR'], loc='upper left')
-                
-                # Adjust date labels
-                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-                ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(mdates.AutoDateLocator()))
+
+                # Increase date labels
+                locator = mdates.AutoDateLocator()
+                formatter = mdates.ConciseDateFormatter(locator)
+                ax.xaxis.set_major_locator(locator)
+                ax.xaxis.set_major_formatter(formatter)
                 plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
 
                 # Note: mplfinance does not support legends directly.
@@ -653,4 +652,3 @@ elif page == 'Corporate Bonds':
 
     else:
         st.write("No data available for the selected corporate bond.")
-
