@@ -33,7 +33,7 @@ country_indices = {
 
 # Index constituents (sample stocks)
 index_stocks = {
-    'S&P 500': 'S&P 500': get_sp500_tickers(),
+    'S&P 500': get_sp500_tickers(),
         #('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
         #('AMZN', 'Amazon.com Inc.'), ('TSLA', 'Tesla Inc.'), # Add more companies here
     ,
