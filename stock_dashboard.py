@@ -7,6 +7,7 @@ import ta
 import seaborn as sns
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
+import scipy
 
 # Configure the page
 st.set_page_config(layout="wide")
