@@ -39,7 +39,12 @@ index_stocks = {
     'PLD', 'HCA', 'ICE', 'MMC', 'GM', 'ELV', 'PNC', 'COF', 'AON', 'FIS'
 ],
     'NASDAQ 100': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'],
-    'Merval': ['GGAL.BA', 'YPFD.BA', 'BMA.BA', 'TXAR.BA', 'TECO2.BA'],
+    'Merval': [
+    'AGRO.BA', 'ALUA.BA', 'BBAR.BA', 'BMA.BA', 'BYMA.BA', 'CEPU.BA', 'CRES.BA', 'CVH.BA', 
+    'EDN.BA', 'GGAL.BA', 'HARG.BA', 'LOMA.BA', 'MIRG.BA', 'PAMP.BA', 'SUPV.BA', 'TECO2.BA', 
+    'TGSU2.BA', 'TGNO4.BA', 'TRAN.BA', 'TXAR.BA', 'VALO.BA', 'YPFD.BA'
+]
+,
     'Bovespa': ['PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 'ABEV3.SA'],
     # Add more indices and their stocks as needed
 }
