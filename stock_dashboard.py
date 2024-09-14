@@ -26,7 +26,18 @@ country_indices = {
 
 # Index constituents (sample stocks)
 index_stocks = {
-    'S&P 500': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],
+    'S&P 500': [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'BRK.B', 'V', 'JPM',
+    'JNJ', 'WMT', 'UNH', 'MA', 'PG', 'HD', 'XOM', 'BAC', 'AVGO', 'PFE',
+    'KO', 'LLY', 'CSCO', 'COST', 'PEP', 'ABBV', 'MRK', 'TMO', 'DIS', 'CVX',
+    'MCD', 'ABT', 'ACN', 'DHR', 'NFLX', 'LIN', 'NEE', 'TXN', 'WFC', 'INTC',
+    'VZ', 'AMD', 'ADBE', 'PM', 'MS', 'MDT', 'HON', 'ORCL', 'IBM', 'AMGN',
+    'NKE', 'BA', 'GS', 'SBUX', 'LMT', 'AMT', 'BLK', 'LOW', 'RTX', 'NOW',
+    'C', 'INTU', 'T', 'BKNG', 'AXP', 'CAT', 'MO', 'GE', 'MMM', 'GILD',
+    'ADP', 'ISRG', 'CB', 'SCHW', 'MU', 'SYK', 'USB', 'CI', 'SPGI', 'REGN',
+    'EW', 'SO', 'BSX', 'TGT', 'ZTS', 'MDLZ', 'DE', 'BDX', 'DUK', 'CSX',
+    'PLD', 'HCA', 'ICE', 'MMC', 'GM', 'ELV', 'PNC', 'COF', 'AON', 'FIS'
+],
     'NASDAQ 100': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'],
     'Merval': ['GGAL.BA', 'YPFD.BA', 'BMA.BA', 'TXAR.BA', 'TECO2.BA'],
     'Bovespa': ['PETR4.SA', 'VALE3.SA', 'ITUB4.SA', 'BBDC4.SA', 'ABEV3.SA'],
