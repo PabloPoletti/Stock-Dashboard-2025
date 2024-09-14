@@ -8,6 +8,13 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 
+# Get the list of S&P 500 companies using yfinance
+def get_sp500_tickers():
+    sp500_tickers = yf.Ticker('^GSPC').components
+    return [(ticker, info['longName']) for ticker, info in sp500_tickers.items()]
+
+sp500_list = get_sp500_tickers()
+
 # Configure the page
 st.set_page_config(layout="wide")
 
@@ -26,9 +33,9 @@ country_indices = {
 
 # Index constituents (sample stocks)
 index_stocks = {
-    'S&P 500': [
-        ('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
-        ('AMZN', 'Amazon.com Inc.'), ('TSLA', 'Tesla Inc.'), # Add more companies here
+    'S&P 500': ['S&P 500': get_sp500_tickers(),
+        #('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
+        #('AMZN', 'Amazon.com Inc.'), ('TSLA', 'Tesla Inc.'), # Add more companies here
     ],
     'NASDAQ 100': [
         ('AAPL', 'Apple Inc.'), ('MSFT', 'Microsoft Corp.'), ('GOOGL', 'Alphabet Inc.'), 
