@@ -15,6 +15,14 @@ st.sidebar.title('Navigation')
 page = st.sidebar.selectbox('Select a page:', ['Stock Analysis', 'Correlation Matrix'])
 
 if page == 'Stock Analysis':
+    # [All the code for the 'Stock Analysis' page remains the same]
+    # (This includes the code we updated earlier with the axis adjustments and date labels)
+    # ...
+
+    # [Include the entire 'Stock Analysis' code from the previous update]
+
+    # For brevity, I'm including the full code below.
+
     # Inputs in the sidebar
     st.sidebar.title('Stock Analysis')
     symbol = st.sidebar.text_input('Symbol', value='AAPL')
@@ -217,9 +225,83 @@ if page == 'Stock Analysis':
 
             st.pyplot(fig_vol)
 
-        # Additional indicators plotting (you can adjust axes similarly if needed)
+        # Additional indicators plotting
+        # (Include the plotting code for other indicators if desired)
+        # For example:
+        if show_rsi:
+            st.subheader('RSI')
+            fig_rsi, ax_rsi = plt.subplots(figsize=(14, 3))
+            ax_rsi.plot(data.index, data['RSI'], color='purple')
+            ax_rsi.axhline(70, color='red', linestyle='--')
+            ax_rsi.axhline(30, color='green', linestyle='--')
+            ax_rsi.set_xlabel('Date')
+            ax_rsi.set_ylabel('RSI')
+
+            # Adjust x-axis labels
+            ax_rsi.xaxis.set_major_locator(locator)
+            ax_rsi.xaxis.set_major_formatter(formatter)
+            plt.setp(ax_rsi.get_xticklabels(), rotation=45, ha='right')
+
+            st.pyplot(fig_rsi)
+
+        # Continue with other indicators as needed
         # ...
 
 elif page == 'Correlation Matrix':
-    # Correlation Matrix Page (no changes needed here)
-    # ... [Rest of the code remains the same]
+    # Correlation Matrix Page
+    st.title('Stock Correlation Matrix')
+    st.sidebar.title('Correlation Matrix Settings')
+
+    # Select stocks
+    num_stocks = st.sidebar.slider('Number of Stocks', min_value=2, max_value=10, value=2)
+    stock_symbols = []
+    for i in range(num_stocks):
+        symbol = st.sidebar.text_input(f'Symbol {i+1}', value='AAPL' if i == 0 else '')
+        if symbol:
+            stock_symbols.append(symbol.upper())
+
+    # Select time period
+    period = st.sidebar.selectbox('Period', ['1mo', '3mo', '6mo', '1y', '5y', 'max'], index=3)
+    interval = st.sidebar.selectbox('Interval', ['1d', '1wk', '1mo'], index=0)
+    # Select correlation method
+    corr_method = st.sidebar.selectbox('Correlation Method', ['Pearson', 'Spearman', 'Kendall'], index=0)
+
+    if len(stock_symbols) >= 2:
+        @st.cache
+        def load_data(symbols, period, interval):
+            df = pd.DataFrame()
+            for sym in symbols:
+                data = yf.download(sym, period=period, interval=interval)
+                data = data['Close'].rename(sym)
+                df = pd.concat([df, data], axis=1)
+            return df
+
+        data = load_data(stock_symbols, period, interval)
+
+        if data.isnull().values.any():
+            data = data.fillna(method='ffill').dropna()
+
+        # Calculate correlation
+        corr = data.corr(method=corr_method.lower())
+
+        # Plot correlation matrix
+        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax_corr, vmin=-1, vmax=1)
+        ax_corr.set_title(f'{corr_method} Correlation Matrix')
+        st.pyplot(fig_corr)
+
+        # Explanation legend
+        st.markdown("""
+        **Correlation Coefficient Interpretation:**
+        - **1**: Perfect positive correlation
+        - **0.7 to 0.99**: Strong positive correlation
+        - **0.4 to 0.69**: Moderate positive correlation
+        - **0.1 to 0.39**: Weak positive correlation
+        - **0**: No correlation
+        - **-0.1 to -0.39**: Weak negative correlation
+        - **-0.4 to -0.69**: Moderate negative correlation
+        - **-0.7 to -0.99**: Strong negative correlation
+        - **-1**: Perfect negative correlation
+        """)
+    else:
+        st.write("Please enter at least two stock symbols.")
