@@ -92,7 +92,8 @@ if page == 'Stock Analysis':
             data['Williams %R'] = ta.momentum.WilliamsRIndicator(high=data['High'], low=data['Low'], close=data['Close']).williams_r()
 
         if show_momentum:
-            data['Momentum'] = ta.momentum.MomentumIndicator(close=data['Close']).momentum()
+            # Calculate Momentum manually
+            data['Momentum'] = data['Close'] - data['Close'].shift(1)
 
         if show_parabolic_sar:
             psar_indicator = ta.trend.PSARIndicator(high=data['High'], low=data['Low'], close=data['Close'])
@@ -186,7 +187,7 @@ if page == 'Stock Analysis':
             ax_vol.set_xlabel('Date')
             st.pyplot(fig_vol)
 
-        # Additional indicators (Same as before)
+        # Additional indicators plotting
         if show_rsi:
             st.subheader('RSI')
             fig_rsi, ax_rsi = plt.subplots(figsize=(14, 3))
@@ -207,7 +208,67 @@ if page == 'Stock Analysis':
             ax_macd.legend()
             st.pyplot(fig_macd)
 
-        # Include other indicators as before
+        if show_adx:
+            st.subheader('ADX')
+            fig_adx, ax_adx = plt.subplots(figsize=(14, 3))
+            ax_adx.plot(data.index, data['ADX'], color='orange')
+            ax_adx.set_xlabel('Date')
+            ax_adx.set_ylabel('ADX')
+            st.pyplot(fig_adx)
+
+        if show_obv:
+            st.subheader('On-Balance Volume (OBV)')
+            fig_obv, ax_obv = plt.subplots(figsize=(14, 3))
+            ax_obv.plot(data.index, data['OBV'], color='brown')
+            ax_obv.set_xlabel('Date')
+            ax_obv.set_ylabel('OBV')
+            st.pyplot(fig_obv)
+
+        if show_stochastic:
+            st.subheader('Stochastic Oscillator')
+            fig_stoch, ax_stoch = plt.subplots(figsize=(14, 3))
+            ax_stoch.plot(data.index, data['Stoch_%K'], label='%K', color='blue')
+            ax_stoch.plot(data.index, data['Stoch_%D'], label='%D', color='red')
+            ax_stoch.axhline(80, color='red', linestyle='--')
+            ax_stoch.axhline(20, color='green', linestyle='--')
+            ax_stoch.set_xlabel('Date')
+            ax_stoch.set_ylabel('Stochastic Oscillator')
+            ax_stoch.legend()
+            st.pyplot(fig_stoch)
+
+        if show_cci:
+            st.subheader('Commodity Channel Index (CCI)')
+            fig_cci, ax_cci = plt.subplots(figsize=(14, 3))
+            ax_cci.plot(data.index, data['CCI'], color='magenta')
+            ax_cci.set_xlabel('Date')
+            ax_cci.set_ylabel('CCI')
+            st.pyplot(fig_cci)
+
+        if show_williams:
+            st.subheader('Williams %R')
+            fig_williams, ax_williams = plt.subplots(figsize=(14, 3))
+            ax_williams.plot(data.index, data['Williams %R'], color='darkgreen')
+            ax_williams.axhline(-20, color='red', linestyle='--')
+            ax_williams.axhline(-80, color='green', linestyle='--')
+            ax_williams.set_xlabel('Date')
+            ax_williams.set_ylabel('Williams %R')
+            st.pyplot(fig_williams)
+
+        if show_momentum:
+            st.subheader('Momentum')
+            fig_momentum, ax_momentum = plt.subplots(figsize=(14, 3))
+            ax_momentum.plot(data.index, data['Momentum'], color='navy')
+            ax_momentum.set_xlabel('Date')
+            ax_momentum.set_ylabel('Momentum')
+            st.pyplot(fig_momentum)
+
+        if show_roc:
+            st.subheader('Rate of Change (ROC)')
+            fig_roc, ax_roc = plt.subplots(figsize=(14, 3))
+            ax_roc.plot(data.index, data['ROC'], color='teal')
+            ax_roc.set_xlabel('Date')
+            ax_roc.set_ylabel('ROC')
+            st.pyplot(fig_roc)
 
 elif page == 'Correlation Matrix':
     # Correlation Matrix Page
@@ -244,12 +305,7 @@ elif page == 'Correlation Matrix':
             data = data.fillna(method='ffill').dropna()
 
         # Calculate correlation
-        if corr_method == 'Pearson':
-            corr = data.corr(method='pearson')
-        elif corr_method == 'Spearman':
-            corr = data.corr(method='spearman')
-        elif corr_method == 'Kendall':
-            corr = data.corr(method='kendall')
+        corr = data.corr(method=corr_method.lower())
 
         # Plot correlation matrix
         fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
