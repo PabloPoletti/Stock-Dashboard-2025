@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np  # Import NumPy directly
 import matplotlib.pyplot as plt
 import ta
 import seaborn as sns
@@ -161,7 +162,7 @@ if page == 'Stock Analysis':
 
                 if show_ma:
                     for ma in show_ma:
-                        add_plots.append(mpf.make_addplot(data[f"MA{ma}"], color='blue', width=1, panel=0))
+                        add_plots.append(mpf.make_addplot(data[f"MA{ma}"], color='blue', width=1, panel=0, ylabel='Price'))
 
                 if show_ema:
                     for ema in show_ema:
@@ -201,6 +202,9 @@ if page == 'Stock Analysis':
                 ax.xaxis.set_major_locator(locator)
                 ax.xaxis.set_major_formatter(formatter)
                 plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+                # Note: mplfinance does not support legends directly.
+                # You can create custom legends if necessary.
 
                 st.pyplot(fig)
             else:
@@ -269,7 +273,94 @@ if page == 'Stock Analysis':
                 st.pyplot(fig_vol)
 
             # Additional indicators plotting
-            # (Include plotting code for other indicators as needed)
+            if show_rsi:
+                st.subheader('RSI')
+                fig_rsi, ax_rsi = plt.subplots(figsize=(14, 3))
+                ax_rsi.plot(data.index, data['RSI'], color='purple')
+                ax_rsi.axhline(70, color='red', linestyle='--')
+                ax_rsi.axhline(30, color='green', linestyle='--')
+                ax_rsi.set_xlabel('Date')
+                ax_rsi.set_ylabel('RSI')
+                ax_rsi.legend(['RSI'])
+                st.pyplot(fig_rsi)
+
+            if show_macd:
+                st.subheader('MACD')
+                fig_macd, ax_macd = plt.subplots(figsize=(14, 3))
+                ax_macd.plot(data.index, data['MACD'], label='MACD', color='blue')
+                ax_macd.plot(data.index, data['MACD_signal'], label='Signal Line', color='red')
+                ax_macd.set_xlabel('Date')
+                ax_macd.set_ylabel('MACD')
+                ax_macd.legend()
+                st.pyplot(fig_macd)
+
+            if show_adx:
+                st.subheader('ADX')
+                fig_adx, ax_adx = plt.subplots(figsize=(14, 3))
+                ax_adx.plot(data.index, data['ADX'], color='orange')
+                ax_adx.set_xlabel('Date')
+                ax_adx.set_ylabel('ADX')
+                ax_adx.legend(['ADX'])
+                st.pyplot(fig_adx)
+
+            if show_obv:
+                st.subheader('On-Balance Volume (OBV)')
+                fig_obv, ax_obv = plt.subplots(figsize=(14, 3))
+                ax_obv.plot(data.index, data['OBV'], color='brown')
+                ax_obv.set_xlabel('Date')
+                ax_obv.set_ylabel('OBV')
+                ax_obv.legend(['OBV'])
+                st.pyplot(fig_obv)
+
+            if show_stochastic:
+                st.subheader('Stochastic Oscillator')
+                fig_stoch, ax_stoch = plt.subplots(figsize=(14, 3))
+                ax_stoch.plot(data.index, data['Stoch_%K'], label='%K', color='blue')
+                ax_stoch.plot(data.index, data['Stoch_%D'], label='%D', color='red')
+                ax_stoch.axhline(80, color='red', linestyle='--')
+                ax_stoch.axhline(20, color='green', linestyle='--')
+                ax_stoch.set_xlabel('Date')
+                ax_stoch.set_ylabel('Stochastic Oscillator')
+                ax_stoch.legend()
+                st.pyplot(fig_stoch)
+
+            if show_cci:
+                st.subheader('Commodity Channel Index (CCI)')
+                fig_cci, ax_cci = plt.subplots(figsize=(14, 3))
+                ax_cci.plot(data.index, data['CCI'], color='magenta')
+                ax_cci.set_xlabel('Date')
+                ax_cci.set_ylabel('CCI')
+                ax_cci.legend(['CCI'])
+                st.pyplot(fig_cci)
+
+            if show_williams:
+                st.subheader('Williams %R')
+                fig_williams, ax_williams = plt.subplots(figsize=(14, 3))
+                ax_williams.plot(data.index, data['Williams %R'], color='darkgreen')
+                ax_williams.axhline(-20, color='red', linestyle='--')
+                ax_williams.axhline(-80, color='green', linestyle='--')
+                ax_williams.set_xlabel('Date')
+                ax_williams.set_ylabel("Williams %R")
+                ax_williams.legend(["Williams %R"])
+                st.pyplot(fig_williams)
+
+            if show_momentum:
+                st.subheader('Momentum')
+                fig_momentum, ax_momentum = plt.subplots(figsize=(14, 3))
+                ax_momentum.plot(data.index, data['Momentum'], color='navy')
+                ax_momentum.set_xlabel('Date')
+                ax_momentum.set_ylabel('Momentum')
+                ax_momentum.legend(['Momentum'])
+                st.pyplot(fig_momentum)
+
+            if show_roc:
+                st.subheader('Rate of Change (ROC)')
+                fig_roc, ax_roc = plt.subplots(figsize=(14, 3))
+                ax_roc.plot(data.index, data['ROC'], color='teal')
+                ax_roc.set_xlabel('Date')
+                ax_roc.set_ylabel('ROC')
+                ax_roc.legend(['ROC'])
+                st.pyplot(fig_roc)
 
     else:
         st.write("Please select a stock to proceed.")
@@ -314,25 +405,29 @@ elif page == 'Correlation Matrix':
         # Calculate correlation
         corr = data.corr(method=corr_method.lower())
 
-        # Plot correlation matrix
-        fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
-        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax_corr, vmin=-1, vmax=1)
-        ax_corr.set_title(f'{corr_method} Correlation Matrix')
-        st.pyplot(fig_corr)
+        if len(stock_symbols) == 2:
+            corr_value = corr.iloc[0,1]
+            st.write(f"The {corr_method} correlation coefficient between {stock_symbols[0]} and {stock_symbols[1]} is: {corr_value:.4f}")
+        else:
+            # Plot correlation matrix
+            fig_corr, ax_corr = plt.subplots(figsize=(10, 8))
+            sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax_corr, vmin=-1, vmax=1)
+            ax_corr.set_title(f'{corr_method} Correlation Matrix')
+            st.pyplot(fig_corr)
 
-        # Explanation legend
-        st.markdown("""
-        **Correlation Coefficient Interpretation:**
-        - **1**: Perfect positive correlation
-        - **0.7 to 0.99**: Strong positive correlation
-        - **0.4 to 0.69**: Moderate positive correlation
-        - **0.1 to 0.39**: Weak positive correlation
-        - **0**: No correlation
-        - **-0.1 to -0.39**: Weak negative correlation
-        - **-0.4 to -0.69**: Moderate negative correlation
-        - **-0.7 to -0.99**: Strong negative correlation
-        - **-1**: Perfect negative correlation
-        """)
+            # Explanation legend
+            st.markdown("""
+            **Correlation Coefficient Interpretation:**
+            - **1**: Perfect positive correlation
+            - **0.7 to 0.99**: Strong positive correlation
+            - **0.4 to 0.69**: Moderate positive correlation
+            - **0.1 to 0.39**: Weak positive correlation
+            - **0**: No correlation
+            - **-0.1 to -0.39**: Weak negative correlation
+            - **-0.4 to -0.69**: Moderate negative correlation
+            - **-0.7 to -0.99**: Strong negative correlation
+            - **-1**: Perfect negative correlation
+            """)
     else:
         st.write("Please select at least two stocks to proceed.")
 
@@ -379,7 +474,7 @@ elif page == 'Fixed Income':
 
         # Simulate price data
         dates = pd.date_range(end=pd.Timestamp.today(), periods=100)
-        prices = pd.Series(100 + pd.np.random.randn(100).cumsum(), index=dates)
+        prices = pd.Series(100 + np.random.randn(100).cumsum(), index=dates)
 
         fig_bond, ax_bond = plt.subplots(figsize=(14, 7))
         ax_bond.plot(prices.index, prices.values, label='Price')
