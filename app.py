@@ -665,22 +665,70 @@ def main():
     elif selected == "🤖 AI Predictions":
         st.subheader("🤖 AI-Powered Price Predictions")
         
-        # Stock selection for prediction
-        symbol = st.selectbox("Select stock for prediction:", 
-                             ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'])
+        # Model explanation
+        with st.expander("📖 About Our Prediction Models", expanded=False):
+            st.markdown("""
+            ### 🧠 Ensemble Machine Learning Approach
+            
+            Our predictions use a **sophisticated ensemble of three advanced ML models**:
+            
+            - **🌲 Random Forest Regressor**: Uses 100 decision trees with bootstrap sampling
+            - **⚡ XGBoost**: Gradient boosting with adaptive learning rates
+            - **💡 LightGBM**: High-performance gradient boosting with leaf-wise tree growth
+            
+            ### 📊 Feature Engineering
+            - **Technical Indicators**: RSI, MACD, Moving Averages, Bollinger Bands
+            - **Price Patterns**: Lagged prices (1, 2, 3, 5, 10 days)
+            - **Volume Analysis**: Volume trends and patterns
+            - **Volatility Metrics**: Rolling standard deviation and returns
+            
+            ### 🎯 Model Performance
+            - **Training Period**: 2 years of historical data
+            - **Validation**: 80/20 train-test split with temporal consistency
+            - **Ensemble Method**: Weighted average of all three models
+            - **Accuracy Metric**: R² score on validation data
+            
+            **⚠️ Important**: These are statistical predictions based on historical patterns. 
+            Not financial advice. Markets are inherently unpredictable.
+            """)
         
-        prediction_days = st.slider("📅 Prediction period (days):", 1, 90, 30)
+        # Stock selection - Allow custom input
+        col1, col2 = st.columns([2, 1])
         
-        if st.button("🚀 Generate Prediction"):
-            with st.spinner("🧠 AI is analyzing patterns..."):
+        with col1:
+            # Predefined categories
+            stock_category = st.selectbox("📂 Select Category (or use custom ticker below):", 
+                                        ["Custom Ticker", "US Tech Giants", "US Banks", "S&P 500 Top", "Crypto", "Commodities"])
+            
+            if stock_category == "Custom Ticker":
+                symbol = st.text_input("🔤 Enter Stock Ticker:", 
+                                     placeholder="e.g., AAPL, TSLA, NVDA, MSFT",
+                                     help="Enter any valid stock ticker from major exchanges").upper()
+            elif stock_category == "US Tech Giants":
+                symbol = st.selectbox("Select Stock:", ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA'])
+            elif stock_category == "US Banks":
+                symbol = st.selectbox("Select Stock:", ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS'])
+            elif stock_category == "S&P 500 Top":
+                symbol = st.selectbox("Select Stock:", ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'BRK.B', 'UNH', 'JNJ', 'V', 'PG'])
+            elif stock_category == "Crypto":
+                symbol = st.selectbox("Select Crypto:", ['BTC-USD', 'ETH-USD', 'ADA-USD', 'DOT-USD'])
+            elif stock_category == "Commodities":
+                symbol = st.selectbox("Select Commodity:", ['GC=F', 'SI=F', 'CL=F', 'NG=F'])
+        
+        with col2:
+            prediction_days = st.slider("📅 Prediction period (days):", 5, 60, 30)
+            confidence_interval = st.checkbox("📊 Show Confidence Bands", value=True)
+        
+        if symbol and st.button("🚀 Generate AI Prediction"):
+            with st.spinner("🧠 Training ensemble models and generating predictions..."):
                 # Load data
                 data = load_stock_data(symbol, period="2y", interval="1d")
                 
-                if not data.empty:
+                if not data.empty and len(data) > 100:
                     # Generate predictions
                     predictions, accuracy = predict_stock_price(data, prediction_days)
                     
-                    if len(predictions) > 0:
+                    if len(predictions) > 0 and not np.isnan(predictions).all():
                         # Create prediction chart
                         last_date = data.index[-1]
                         future_dates = pd.date_range(start=last_date + timedelta(days=1), 
@@ -688,13 +736,14 @@ def main():
                         
                         fig = go.Figure()
                         
-                        # Historical data
+                        # Historical data (last 60 days)
+                        hist_data = data.iloc[-60:] if len(data) >= 60 else data
                         fig.add_trace(go.Scatter(
-                            x=data.index[-60:], 
-                            y=data['Close'].iloc[-60:],
+                            x=hist_data.index, 
+                            y=hist_data['Close'],
                             mode='lines',
                             name='Historical',
-                            line=dict(color=COLORS['primary'])
+                            line=dict(color=COLORS['primary'], width=2)
                         ))
                         
                         # Predictions
@@ -702,40 +751,122 @@ def main():
                             x=future_dates,
                             y=predictions,
                             mode='lines',
-                            name='Predicted',
-                            line=dict(color=COLORS['warning'], dash='dash')
+                            name='AI Prediction',
+                            line=dict(color=COLORS['warning'], width=3, dash='dash')
                         ))
                         
+                        # Add confidence bands if requested
+                        if confidence_interval:
+                            std_dev = np.std(data['Close'].pct_change().dropna()) * np.sqrt(252)
+                            upper_bound = predictions * (1 + std_dev * 0.1)
+                            lower_bound = predictions * (1 - std_dev * 0.1)
+                            
+                            fig.add_trace(go.Scatter(
+                                x=future_dates,
+                                y=upper_bound,
+                                mode='lines',
+                                name='Upper Confidence',
+                                line=dict(color='rgba(255,0,0,0.3)', width=1),
+                                fill=None
+                            ))
+                            
+                            fig.add_trace(go.Scatter(
+                                x=future_dates,
+                                y=lower_bound,
+                                mode='lines',
+                                name='Lower Confidence',
+                                line=dict(color='rgba(255,0,0,0.3)', width=1),
+                                fill='tonexty',
+                                fillcolor='rgba(255,0,0,0.1)'
+                            ))
+                        
                         fig.update_layout(
-                            title=f"{symbol} - AI Price Prediction",
+                            title=f"{symbol} - AI Ensemble Price Prediction ({prediction_days} days)",
                             xaxis_title="Date",
                             yaxis_title="Price ($)",
                             template="plotly_white",
-                            height=500
+                            height=600,
+                            hovermode='x unified'
                         )
                         
                         st.plotly_chart(fig, use_container_width=True)
                         
-                        # Prediction summary
+                        # Prediction metrics
                         current_price = data['Close'].iloc[-1]
                         predicted_price = predictions[-1]
                         predicted_change = ((predicted_price - current_price) / current_price) * 100
+                        volatility = data['Close'].pct_change().std() * np.sqrt(252) * 100
                         
-                        col1, col2, col3 = st.columns(3)
+                        col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             st.metric("🎯 Current Price", f"${current_price:.2f}")
                         with col2:
                             st.metric("🔮 Predicted Price", f"${predicted_price:.2f}", 
-                                    f"{predicted_change:.2f}%")
+                                    f"{predicted_change:+.2f}%")
                         with col3:
                             st.metric("🎯 Model Accuracy", f"{accuracy:.1%}")
+                        with col4:
+                            st.metric("📊 Annual Volatility", f"{volatility:.1f}%")
                         
-                        # Disclaimer
-                        st.warning("⚠️ This is for educational purposes only. Not financial advice!")
+                        # Model details
+                        st.subheader("📈 Prediction Analysis")
+                        
+                        analysis_col1, analysis_col2 = st.columns(2)
+                        
+                        with analysis_col1:
+                            st.write("**🔍 Technical Signals:**")
+                            
+                            # Calculate current technical indicators
+                            current_rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns else None
+                            current_sma20 = data['SMA_20'].iloc[-1] if 'SMA_20' in data.columns else None
+                            
+                            if current_rsi:
+                                if current_rsi > 70:
+                                    st.write("• RSI: 🔴 Overbought")
+                                elif current_rsi < 30:
+                                    st.write("• RSI: 🟢 Oversold") 
+                                else:
+                                    st.write("• RSI: 🟡 Neutral")
+                            
+                            if current_sma20:
+                                if current_price > current_sma20:
+                                    st.write("• Price vs SMA20: 🟢 Above")
+                                else:
+                                    st.write("• Price vs SMA20: 🔴 Below")
+                        
+                        with analysis_col2:
+                            st.write("**🎯 Prediction Confidence:**")
+                            
+                            if accuracy > 0.8:
+                                st.write("• Model Reliability: 🟢 High")
+                            elif accuracy > 0.6:
+                                st.write("• Model Reliability: 🟡 Medium")
+                            else:
+                                st.write("• Model Reliability: 🔴 Low")
+                            
+                            if abs(predicted_change) < 5:
+                                st.write("• Expected Movement: 🔵 Stable")
+                            elif predicted_change > 5:
+                                st.write("• Expected Movement: 🟢 Bullish")
+                            else:
+                                st.write("• Expected Movement: 🔴 Bearish")
+                        
+                        # Risk disclaimer
+                        st.error("""
+                        ⚠️ **IMPORTANT DISCLAIMER**: 
+                        This prediction is generated by machine learning models for educational purposes only. 
+                        It should NOT be used as financial advice. Always consult with financial professionals 
+                        and conduct your own research before making investment decisions.
+                        """)
+                        
                     else:
-                        st.error("❌ Unable to generate predictions. Insufficient data.")
+                        st.error("❌ Unable to generate reliable predictions. The model requires more stable data.")
+                elif data.empty:
+                    st.error(f"❌ No data available for ticker '{symbol}'. Please verify the ticker symbol.")
                 else:
-                    st.error(f"❌ No data available for {symbol}")
+                    st.error("❌ Insufficient data for prediction. Need at least 100 days of historical data.")
+        elif not symbol:
+            st.info("👆 Please select or enter a stock ticker to generate predictions.")
     
     # Portfolio Tracker Page
     elif selected == "📈 Portfolio Tracker":
@@ -821,29 +952,235 @@ def main():
     
     # Technical Screener Page
     elif selected == "📋 Technical Screener":
-        st.subheader("📋 Technical Stock Screener")
+        st.subheader("📋 Real-Time Technical Stock Screener")
         
-        st.info("🚧 Technical screener coming soon! This will include:")
-        st.markdown("""
-        - 🔍 Multi-criteria stock screening
-        - 📊 RSI, MACD, and momentum filters
-        - 💹 Volume and price action alerts
-        - 🎯 Custom screening criteria
-        - 📈 Real-time scanning of 1000+ stocks
-        """)
+        # Screening criteria
+        with st.expander("🔧 Screening Criteria", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.write("**📊 RSI Filter**")
+                rsi_filter = st.selectbox("RSI Condition:", 
+                                        ["All", "Oversold (<30)", "Neutral (30-70)", "Overbought (>70)"])
+                
+                st.write("**💰 Price Filter**")
+                min_price = st.number_input("Min Price ($):", min_value=0.0, value=10.0)
+                max_price = st.number_input("Max Price ($):", min_value=0.0, value=1000.0)
+            
+            with col2:
+                st.write("**📈 Moving Average**")
+                ma_filter = st.selectbox("Price vs MA20:", 
+                                       ["All", "Above MA20", "Below MA20"])
+                
+                st.write("**📊 Volume Filter**")
+                volume_filter = st.selectbox("Volume Alert:", 
+                                           ["All", "High Volume", "Normal Volume"])
+            
+            with col3:
+                st.write("**🎯 Market Cap**")
+                market_cap_filter = st.selectbox("Market Cap:", 
+                                                ["All", "Large Cap (>10B)", "Mid Cap (2-10B)", "Small Cap (<2B)"])
+                
+                st.write("**📈 MACD Signal**")
+                macd_filter = st.selectbox("MACD Signal:", 
+                                         ["All", "Bullish", "Bearish", "Neutral"])
         
-        # Demo screener results
-        demo_results = {
-            'Symbol': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'],
-            'Price': [175.50, 310.25, 2650.00, 3100.00, 185.75],
-            'RSI': [65.2, 58.7, 42.1, 71.5, 55.8],
-            'MACD Signal': ['Bullish', 'Neutral', 'Bearish', 'Bullish', 'Neutral'],
-            'Volume Alert': ['High', 'Normal', 'Normal', 'High', 'Normal']
-        }
+        # Stock universe selection
+        universe = st.selectbox("🌍 Stock Universe:", 
+                              ["S&P 500 Top 50", "Tech Giants", "Banking Sector", "Energy Sector"])
         
-        demo_df = pd.DataFrame(demo_results)
-        st.subheader("🎭 Demo Screener Results")
-        st.dataframe(demo_df, hide_index=True)
+        if st.button("🔍 Run Real-Time Screener"):
+            with st.spinner("🔄 Scanning stocks with real-time data..."):
+                
+                # Define stock lists based on universe
+                if universe == "S&P 500 Top 50":
+                    stocks_to_scan = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'BRK.B', 
+                                    'UNH', 'JNJ', 'V', 'PG', 'HD', 'MA', 'XOM', 'JPM', 'LLY', 'CVX', 
+                                    'ABBV', 'PFE', 'KO', 'AVGO', 'COST', 'MRK', 'WMT', 'PEP', 'BAC', 
+                                    'TMO', 'CSCO', 'DIS', 'ACN', 'VZ', 'DHR', 'MCD', 'WFC', 'NEE', 
+                                    'ABT', 'CRM', 'ADBE', 'TXN', 'LIN', 'CMCSA', 'NFLX', 'PM', 'RTX', 
+                                    'HON', 'AMD', 'QCOM', 'IBM']
+                elif universe == "Tech Giants":
+                    stocks_to_scan = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'NFLX', 
+                                    'ADBE', 'CRM', 'INTC', 'AMD', 'QCOM', 'AVGO', 'TXN', 'ORCL']
+                elif universe == "Banking Sector":
+                    stocks_to_scan = ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'USB', 'PNC', 'TFC', 'COF', 
+                                    'BK', 'STT', 'AXP', 'SCHW', 'CME', 'ICE', 'SPGI', 'MCO']
+                elif universe == "Energy Sector":
+                    stocks_to_scan = ['XOM', 'CVX', 'COP', 'EOG', 'SLB', 'MPC', 'VLO', 'PSX', 'HES', 
+                                    'OXY', 'KMI', 'WMB', 'ENB', 'TRP', 'EPD', 'ET', 'MPLX']
+                
+                screener_results = []
+                
+                # Progress bar
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                for i, symbol in enumerate(stocks_to_scan):
+                    status_text.text(f"Analyzing {symbol}... ({i+1}/{len(stocks_to_scan)})")
+                    progress_bar.progress((i + 1) / len(stocks_to_scan))
+                    
+                    # Load data for each stock
+                    data = load_stock_data(symbol, period="3mo", interval="1d")
+                    
+                    if not data.empty and len(data) > 30:
+                        try:
+                            # Get basic info
+                            current_price = data['Close'].iloc[-1]
+                            prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
+                            price_change = ((current_price - prev_price) / prev_price) * 100
+                            
+                            # Technical indicators
+                            rsi = data['RSI'].iloc[-1] if 'RSI' in data.columns and not pd.isna(data['RSI'].iloc[-1]) else 50
+                            
+                            # Moving average signal
+                            sma20 = data['SMA_20'].iloc[-1] if 'SMA_20' in data.columns and not pd.isna(data['SMA_20'].iloc[-1]) else current_price
+                            ma_signal = "Above" if current_price > sma20 else "Below"
+                            
+                            # Volume analysis
+                            avg_volume = data['Volume'].tail(20).mean()
+                            current_volume = data['Volume'].iloc[-1]
+                            volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
+                            volume_signal = "High" if volume_ratio > 1.5 else "Normal"
+                            
+                            # MACD signal
+                            if 'MACD' in data.columns and len(data) > 26:
+                                macd_current = data['MACD'].iloc[-1] if not pd.isna(data['MACD'].iloc[-1]) else 0
+                                macd_prev = data['MACD'].iloc[-2] if len(data) > 1 and not pd.isna(data['MACD'].iloc[-2]) else 0
+                                
+                                if macd_current > 0 and macd_current > macd_prev:
+                                    macd_signal = "Bullish"
+                                elif macd_current < 0 and macd_current < macd_prev:
+                                    macd_signal = "Bearish"
+                                else:
+                                    macd_signal = "Neutral"
+                            else:
+                                macd_signal = "Neutral"
+                            
+                            # Apply filters
+                            passes_filter = True
+                            
+                            # RSI filter
+                            if rsi_filter == "Oversold (<30)" and rsi >= 30:
+                                passes_filter = False
+                            elif rsi_filter == "Neutral (30-70)" and (rsi < 30 or rsi > 70):
+                                passes_filter = False
+                            elif rsi_filter == "Overbought (>70)" and rsi <= 70:
+                                passes_filter = False
+                            
+                            # Price filter
+                            if current_price < min_price or current_price > max_price:
+                                passes_filter = False
+                            
+                            # MA filter
+                            if ma_filter == "Above MA20" and ma_signal != "Above":
+                                passes_filter = False
+                            elif ma_filter == "Below MA20" and ma_signal != "Below":
+                                passes_filter = False
+                            
+                            # Volume filter
+                            if volume_filter == "High Volume" and volume_signal != "High":
+                                passes_filter = False
+                            elif volume_filter == "Normal Volume" and volume_signal != "Normal":
+                                passes_filter = False
+                            
+                            # MACD filter
+                            if macd_filter != "All" and macd_signal != macd_filter:
+                                passes_filter = False
+                            
+                            if passes_filter:
+                                # Get company info
+                                stock_info = get_stock_info(symbol)
+                                market_cap = stock_info.get('market_cap', 0)
+                                market_cap_str = f"${market_cap/1e9:.1f}B" if market_cap > 0 else "N/A"
+                                
+                                # Market cap filter
+                                if market_cap_filter == "Large Cap (>10B)" and market_cap < 10e9:
+                                    continue
+                                elif market_cap_filter == "Mid Cap (2-10B)" and (market_cap < 2e9 or market_cap > 10e9):
+                                    continue
+                                elif market_cap_filter == "Small Cap (<2B)" and market_cap >= 2e9:
+                                    continue
+                                
+                                screener_results.append({
+                                    'Symbol': symbol,
+                                    'Price': f"${current_price:.2f}",
+                                    'Change %': f"{price_change:+.2f}%",
+                                    'RSI': f"{rsi:.1f}",
+                                    'MA Signal': ma_signal,
+                                    'MACD': macd_signal,
+                                    'Volume': volume_signal,
+                                    'Market Cap': market_cap_str,
+                                    'Sector': stock_info.get('sector', 'N/A')
+                                })
+                        
+                        except Exception:
+                            continue
+                
+                # Clear progress indicators
+                progress_bar.empty()
+                status_text.empty()
+                
+                # Display results
+                if screener_results:
+                    results_df = pd.DataFrame(screener_results)
+                    
+                    st.success(f"✅ Found {len(screener_results)} stocks matching your criteria:")
+                    st.dataframe(results_df, hide_index=True, use_container_width=True)
+                    
+                    # Summary statistics
+                    st.subheader("📊 Screening Summary")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        bullish_count = sum(1 for x in results_df['MACD'] if x == 'Bullish')
+                        st.metric("Bullish MACD", bullish_count)
+                    
+                    with col2:
+                        high_vol_count = sum(1 for x in results_df['Volume'] if x == 'High')
+                        st.metric("High Volume", high_vol_count)
+                    
+                    with col3:
+                        above_ma_count = sum(1 for x in results_df['MA Signal'] if x == 'Above')
+                        st.metric("Above MA20", above_ma_count)
+                    
+                    with col4:
+                        st.metric("Total Matches", len(screener_results))
+                    
+                    # Export functionality
+                    csv = results_df.to_csv(index=False)
+                    st.download_button(
+                        label="📄 Download Results (CSV)",
+                        data=csv,
+                        file_name=f"screener_results_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.csv",
+                        mime="text/csv"
+                    )
+                    
+                else:
+                    st.warning("⚠️ No stocks match your screening criteria. Try adjusting the filters.")
+        
+        # Technical analysis guide
+        with st.expander("📚 Technical Indicator Guide"):
+            st.markdown("""
+            ### 📊 RSI (Relative Strength Index)
+            - **Oversold**: RSI < 30 (potential buying opportunity)
+            - **Neutral**: RSI 30-70 (normal trading range)  
+            - **Overbought**: RSI > 70 (potential selling signal)
+            
+            ### 📈 Moving Average (MA20)
+            - **Above MA20**: Price above 20-day moving average (bullish)
+            - **Below MA20**: Price below 20-day moving average (bearish)
+            
+            ### 📊 MACD (Moving Average Convergence Divergence)
+            - **Bullish**: MACD rising and positive momentum
+            - **Bearish**: MACD falling and negative momentum
+            - **Neutral**: Mixed or unclear signals
+            
+            ### 📊 Volume Analysis
+            - **High Volume**: 50%+ above 20-day average volume
+            - **Normal Volume**: Within typical trading range
+            """)
     
     # Footer
     st.markdown("---")
