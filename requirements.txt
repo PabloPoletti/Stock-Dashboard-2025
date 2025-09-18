@@ -1,10 +1,67 @@
-setuptools
-wheel
-streamlit
-yfinance
-pandas
-matplotlib
-ta
-seaborn
-mplfinance
-scipy
+# Core Streamlit and Web Framework
+streamlit>=1.39.0
+streamlit-option-menu>=0.4.0
+streamlit-aggrid>=1.1.8
+streamlit-extras>=0.4.7
+streamlit-lottie>=0.0.5
+
+# Data Processing and Analysis
+pandas>=2.2.0
+numpy>=1.26.0
+yfinance>=0.2.32
+pandas-ta>=0.3.14b
+ta>=0.11.0
+
+# Visualization (Modern Interactive Charts)
+plotly>=5.24.0
+plotly-express>=0.4.1
+kaleido>=0.2.1
+
+# Machine Learning and AI
+scikit-learn>=1.5.0
+xgboost>=2.1.0
+lightgbm>=4.5.0
+prophet>=1.1.5
+tensorflow>=2.17.0
+torch>=2.4.0
+
+# Advanced Analytics
+scipy>=1.14.0
+statsmodels>=0.14.0
+arch>=7.0.0
+quantlib>=1.35
+numpy-financial>=1.0.0
+
+# Sentiment Analysis and NLP
+transformers>=4.45.0
+vaderSentiment>=3.3.2
+textblob>=0.18.0
+
+# Real-time Data and APIs
+requests>=2.31.0
+websocket-client>=1.8.0
+python-dotenv>=1.0.1
+finnhub-python>=2.4.20
+
+# Financial Data Processing
+alpha-vantage>=2.3.1
+quandl>=3.7.0
+fredapi>=0.5.2
+
+# Export and Reporting
+reportlab>=4.2.0
+fpdf2>=2.8.0
+openpyxl>=3.1.0
+xlsxwriter>=3.2.0
+jinja2>=3.1.4
+
+# Utilities and Performance
+numba>=0.60.0
+cachetools>=5.4.0
+redis>=5.0.8
+joblib>=1.4.0
+
+# Development and Testing
+pytest>=8.3.0
+black>=24.8.0
+isort>=5.13.0
