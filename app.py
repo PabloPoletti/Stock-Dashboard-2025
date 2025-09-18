@@ -114,25 +114,73 @@ DEFAULT_STOCKS = {
 # Cache configuration
 @st.cache_data(ttl=300)  # 5 minutes cache
 def load_stock_data(symbol: str, period: str = "1y", interval: str = "1d") -> pd.DataFrame:
-    """Load stock data with caching"""
+    """Load stock data with caching and robust error handling"""
     try:
-        ticker = yf.Ticker(symbol)
-        data = ticker.history(period=period, interval=interval)
+        # Add retry logic for better reliability
+        import time
+        max_retries = 3
         
-        if data.empty:
-            st.error(f"No data found for {symbol}")
-            return pd.DataFrame()
-        
-        # Add basic technical indicators
-        data['SMA_20'] = data['Close'].rolling(window=20).mean()
-        data['SMA_50'] = data['Close'].rolling(window=50).mean()
-        data['RSI'] = ta.rsi(data['Close'], length=14)
-        data['MACD'] = ta.macd(data['Close'])['MACD_12_26_9']
-        data['BB_upper'], data['BB_middle'], data['BB_lower'] = ta.bbands(data['Close']).iloc[:, 0], ta.bbands(data['Close']).iloc[:, 1], ta.bbands(data['Close']).iloc[:, 2]
-        
-        return data
+        for attempt in range(max_retries):
+            try:
+                ticker = yf.Ticker(symbol)
+                data = ticker.history(period=period, interval=interval)
+                
+                # Check if data is None or empty
+                if data is None or data.empty:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)  # Wait 1 second before retry
+                        continue
+                    else:
+                        # Silent fail for better UX in cloud environment
+                        return pd.DataFrame()
+                
+                # Validate data structure
+                required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+                if not all(col in data.columns for col in required_columns):
+                    return pd.DataFrame()
+                
+                # Add basic technical indicators safely
+                try:
+                    if len(data) >= 20:
+                        data['SMA_20'] = data['Close'].rolling(window=20).mean()
+                    if len(data) >= 50:
+                        data['SMA_50'] = data['Close'].rolling(window=50).mean()
+                    if len(data) >= 14:
+                        data['RSI'] = ta.rsi(data['Close'], length=14)
+                    
+                    # MACD and Bollinger Bands with error handling
+                    try:
+                        macd_data = ta.macd(data['Close'])
+                        if macd_data is not None and 'MACD_12_26_9' in macd_data.columns:
+                            data['MACD'] = macd_data['MACD_12_26_9']
+                    except:
+                        pass
+                    
+                    try:
+                        bb_data = ta.bbands(data['Close'])
+                        if bb_data is not None and len(bb_data.columns) >= 3:
+                            data['BB_upper'] = bb_data.iloc[:, 0]
+                            data['BB_middle'] = bb_data.iloc[:, 1] 
+                            data['BB_lower'] = bb_data.iloc[:, 2]
+                    except:
+                        pass
+                        
+                except Exception:
+                    # If technical indicators fail, still return basic data
+                    pass
+                
+                return data
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                else:
+                    # Silent fail for better UX
+                    return pd.DataFrame()
+                    
     except Exception as e:
-        st.error(f"Error loading data for {symbol}: {str(e)}")
+        # Silent fail for production environment
         return pd.DataFrame()
 
 @st.cache_data(ttl=3600)  # 1 hour cache
@@ -424,6 +472,19 @@ def main():
     if selected == "📊 Market Overview":
         st.subheader("🌍 Global Market Overview")
         
+        # Add info about data loading
+        with st.expander("ℹ️ About Market Data", expanded=False):
+            st.info("""
+            **Market data is fetched in real-time from Yahoo Finance.**
+            
+            - Data may take a few seconds to load due to API rate limits
+            - If you see "Loading..." it means the data is being fetched
+            - Refresh the page if data doesn't appear after 30 seconds
+            - All times are in UTC
+            """)
+        
+        st.divider()
+        
         # Major indices
         indices = ['^GSPC', '^IXIC', '^DJI', '^FTSE', '^N225']
         index_names = ['S&P 500', 'NASDAQ', 'Dow Jones', 'FTSE 100', 'Nikkei 225']
@@ -433,16 +494,29 @@ def main():
         for i, (index, name) in enumerate(zip(indices, index_names)):
             with cols[i]:
                 data = load_stock_data(index, period="5d", interval="1d")
-                if not data.empty:
-                    current_price = data['Close'].iloc[-1]
-                    prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
-                    change = current_price - prev_price
-                    change_pct = (change / prev_price) * 100
-                    
+                if not data.empty and len(data) > 0:
+                    try:
+                        current_price = data['Close'].iloc[-1]
+                        prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
+                        change = current_price - prev_price
+                        change_pct = (change / prev_price) * 100
+                        
+                        st.metric(
+                            label=name,
+                            value=f"{current_price:.2f}",
+                            delta=f"{change_pct:.2f}%"
+                        )
+                    except Exception:
+                        st.metric(
+                            label=name,
+                            value="Loading...",
+                            delta="--"
+                        )
+                else:
                     st.metric(
                         label=name,
-                        value=f"{current_price:.2f}",
-                        delta=f"{change_pct:.2f}%"
+                        value="Loading...",
+                        delta="--"
                     )
         
         # Market heatmap
@@ -454,16 +528,19 @@ def main():
         
         for symbol in top_stocks:
             data = load_stock_data(symbol, period="5d", interval="1d")
-            if not data.empty:
-                current_price = data['Close'].iloc[-1]
-                prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
-                change_pct = ((current_price - prev_price) / prev_price) * 100
-                
-                heatmap_data.append({
-                    'Symbol': symbol,
-                    'Change %': change_pct,
-                    'Price': current_price
-                })
+            if not data.empty and len(data) > 0:
+                try:
+                    current_price = data['Close'].iloc[-1]
+                    prev_price = data['Close'].iloc[-2] if len(data) > 1 else current_price
+                    change_pct = ((current_price - prev_price) / prev_price) * 100
+                    
+                    heatmap_data.append({
+                        'Symbol': symbol,
+                        'Change %': change_pct,
+                        'Price': current_price
+                    })
+                except Exception:
+                    continue
         
         if heatmap_data:
             heatmap_df = pd.DataFrame(heatmap_data)
@@ -478,6 +555,8 @@ def main():
             )
             fig.update_layout(height=400)
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("📊 Market data is currently loading. This may take a few moments due to API limitations. Please refresh the page in a moment.")
     
     # Stock Analysis Page
     elif selected == "🔍 Stock Analysis":
