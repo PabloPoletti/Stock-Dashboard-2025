@@ -11,7 +11,7 @@
 
 *Advanced stock analysis dashboard featuring machine learning predictions, real-time data, and interactive visualizations*
 
-[🎯 Live Demo](#-quick-start) | [📖 Features](#-features) | [🛠️ Installation](#-installation) | [📊 Usage](#-usage)
+[🚀 Live Demo](https://stock-dashboard-2025.streamlit.app/) | [📖 Features](#-features) | [🛠️ Installation](#-installation) | [📊 Usage](#-usage)
 
 </div>
 

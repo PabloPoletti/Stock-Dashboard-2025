@@ -13,10 +13,6 @@ maxUploadSize = 200
 [browser]
 gatherUsageStats = false
 
-[global]
-developmentMode = false
-logLevel = "info"
-
 [client]
 showErrorDetails = false
 toolbarMode = "viewer"
